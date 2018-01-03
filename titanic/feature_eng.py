@@ -4,6 +4,7 @@ import pandas as pd #数据分析
 import numpy as np #科学计算
 from pandas import Series,DataFrame
 import matplotlib.pyplot as plt
+import sklearn.preprocessing as preprocessing
 
 ### 使用 RandomForestClassifier 填补缺失的年龄属性
 def set_missing_ages(df):
@@ -37,9 +38,39 @@ def set_Cabin_type(df):
     df.loc[ (df.Cabin.isnull()), 'Cabin' ] = "No"
     return df
 
+def feature_process(data_train):
+    data_train, rfr = set_missing_ages(data_train)
+    data_train = set_Cabin_type(data_train)    
+    dummies_Cabin = pd.get_dummies(data_train['Cabin'], prefix= 'Cabin')
+    dummies_Embarked = pd.get_dummies(data_train['Embarked'], prefix= 'Embarked')
+    dummies_Sex = pd.get_dummies(data_train['Sex'], prefix= 'Sex')
+    dummies_Pclass = pd.get_dummies(data_train['Pclass'], prefix= 'Pclass')
+    df = pd.concat([data_train, dummies_Cabin, dummies_Embarked, dummies_Sex, dummies_Pclass], axis=1)
+    df.drop(['Pclass', 'Name', 'Sex', 'Ticket', 'Cabin', 'Embarked'], axis=1, inplace=True)
+    scaler = preprocessing.StandardScaler()
+    age_scale_param = scaler.fit(df['Age'].values.reshape(-1, 1))
+    df['Age_scaled'] = scaler.fit_transform(df['Age'].values.reshape(-1, 1), age_scale_param)
+    fare_scale_param = scaler.fit(df['Fare'].values.reshape(-1, 1))
+    df['Fare_scaled'] = scaler.fit_transform(df['Fare'].values.reshape(-1, 1), fare_scale_param)
+    return df, rfr, scaler,age_scale_param,fare_scale_param
 
 if __name__ == '__main__':
     data_train = pd.read_csv("train.csv")
     data_train, rfr = set_missing_ages(data_train)
     data_train = set_Cabin_type(data_train)
     # print(data_train)
+    dummies_Cabin = pd.get_dummies(data_train['Cabin'], prefix= 'Cabin')
+    # print(dummies_Cabin)
+    dummies_Embarked = pd.get_dummies(data_train['Embarked'], prefix= 'Embarked')
+    dummies_Sex = pd.get_dummies(data_train['Sex'], prefix= 'Sex')
+    dummies_Pclass = pd.get_dummies(data_train['Pclass'], prefix= 'Pclass')
+    df = pd.concat([data_train, dummies_Cabin, dummies_Embarked, dummies_Sex, dummies_Pclass], axis=1)
+    # print(df.head())
+    df.drop(['Pclass', 'Name', 'Sex', 'Ticket', 'Cabin', 'Embarked'], axis=1, inplace=True)
+    print(df.head())
+    scaler = preprocessing.StandardScaler()
+    age_scale_param = scaler.fit(df['Age'].values.reshape(-1, 1))
+    df['Age_scaled'] = scaler.fit_transform(df['Age'].values.reshape(-1, 1), age_scale_param)
+    fare_scale_param = scaler.fit(df['Fare'].values.reshape(-1, 1))
+    df['Fare_scaled'] = scaler.fit_transform(df['Fare'].values.reshape(-1, 1), fare_scale_param)
+    print(df)
